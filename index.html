@@ -3,13 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Golden Mine - Игра с авторизацией и рекламой</title>
+  <title>Golden Mine - Живая шахта</title>
   <style>
-    /* Reset */
-    * {
-      box-sizing: border-box;
-      user-select: none;
-    }
+    * { box-sizing: border-box; user-select: none; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #f0e68c, #daa520);
@@ -23,7 +19,7 @@
       padding: 30px 25px;
       border-radius: 18px;
       box-shadow: 0 8px 24px rgba(184, 134, 11, 0.6);
-      width: 350px;
+      width: 400px;
       max-width: 95vw;
       text-align: center;
       position: relative;
@@ -119,12 +115,89 @@
       box-shadow: 0 3px 10px #a3740f70;
       color: #fff;
     }
+    #hire-btn {
+      background: #4a7c0f;
+      box-shadow: 0 3px 10px #4a7c0f70;
+      color: #fff;
+    }
     #logout-btn {
       background: #a63232;
       box-shadow: 0 3px 10px #a6323270;
       color: #fff;
-      margin-top: 28px;
+      margin-top: 18px;
     }
+    #miners-info {
+      margin: 12px 0;
+      font-weight: 700;
+      font-size: 16px;
+      color: #705900;
+    }
+    /* Прогресс бар добычи */
+    #progress-bar-container {
+      width: 100%;
+      height: 18px;
+      background: #b8860b33;
+      border-radius: 9px;
+      margin: 12px 0 18px 0;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #ffd700;
+      transition: width 0.25s ease;
+      border-radius: 9px 0 0 9px;
+    }
+    /* Анимация шахтера */
+    #miner-anim {
+      margin: 0 auto 20px auto;
+      width: 80px;
+      height: 80px;
+      position: relative;
+      user-select: none;
+    }
+    /* Качаемый молот */
+    #hammer {
+      width: 40px;
+      height: 40px;
+      background: #d4af37;
+      border-radius: 6px 12px 6px 12px;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      transform-origin: top left;
+      animation: swing 1s infinite ease-in-out;
+      box-shadow: 0 0 6px #ffd700aa;
+    }
+    /* Голова шахтера */
+    #head {
+      width: 30px;
+      height: 30px;
+      background: #c28e00;
+      border-radius: 50%;
+      position: absolute;
+      top: 15px;
+      left: 45px;
+      box-shadow: 0 0 10px #b8860b88;
+    }
+    /* Тело шахтера */
+    #body {
+      width: 28px;
+      height: 40px;
+      background: #d4af37;
+      border-radius: 8px;
+      position: absolute;
+      top: 40px;
+      left: 44px;
+      box-shadow: inset 0 0 8px #a57e00;
+    }
+    /* Анимация удара молотом */
+    @keyframes swing {
+      0% { transform: rotate(20deg); }
+      50% { transform: rotate(-20deg); }
+      100% { transform: rotate(20deg); }
+    }
+
     /* Banner styles */
     #banner-container {
       position: fixed;
@@ -178,9 +251,23 @@
 
     <div id="game">
       <h1>Добро пожаловать, <span id="user-email"></span>!</h1>
+
+      <div id="miner-anim">
+        <div id="hammer"></div>
+        <div id="head"></div>
+        <div id="body"></div>
+      </div>
+
       <div id="coins">Золото: 0</div>
-      <button id="mine-btn" class="btn-small">Добыть золото</button>
-      <button id="upgrade-btn" class="btn-small" disabled>Улучшить добычу (стоимость: 10)</button>
+      <div id="miners-info">Шахтёры: 1 (Уровень: 1)</div>
+
+      <div id="progress-bar-container" title="Прогресс добычи">
+        <div id="progress-bar"></div>
+      </div>
+
+      <button id="mine-btn" class="btn-small">Добыть золото вручную</button>
+      <button id="upgrade-btn" class="btn-small" disabled>Улучшить шахтёра (стоимость: 10)</button>
+      <button id="hire-btn" class="btn-small" disabled>Нанять шахтёров (стоимость: 15)</button>
       <button id="logout-btn">Выйти</button>
       <div class="error" id="game-error"></div>
     </div>
@@ -240,13 +327,21 @@
   const coinsDiv = document.getElementById('coins');
   const mineBtn = document.getElementById('mine-btn');
   const upgradeBtn = document.getElementById('upgrade-btn');
+  const hireBtn = document.getElementById('hire-btn');
   const logoutBtn = document.getElementById('logout-btn');
   const gameError = document.getElementById('game-error');
+  const progressBar = document.getElementById('progress-bar');
 
   // === Game variables ===
   let coins = 0;
   let miningPower = 1;
   let upgradeCost = 10;
+  let hireCost = 15;
+  let minersCount = 1;
+  let isMiningAuto = false;
+  let autoMineProgress = 0; // от 0 до 1
+  const autoMineDuration = 4000; // 4 секунды полный цикл авто добычи
+
   let currentUser = null;
 
   // === Audio setup ===
@@ -291,8 +386,11 @@
   // === Update UI ===
   function updateUI() {
     coinsDiv.textContent = `Золото: ${coins}`;
-    upgradeBtn.textContent = `Улучшить добычу (стоимость: ${upgradeCost})`;
+    upgradeBtn.textContent = `Улучшить шахтёра (стоимость: ${upgradeCost})`;
+    hireBtn.textContent = `Нанять шахтёров (стоимость: ${hireCost})`;
     upgradeBtn.disabled = coins < upgradeCost;
+    hireBtn.disabled = coins < hireCost;
+    document.getElementById('miners-info').textContent = `Шахтёры: ${minersCount} (Уровень: ${miningPower})`;
   }
 
   // === Load & Save Game Data ===
@@ -304,22 +402,58 @@
       coins = data.coins || 0;
       miningPower = data.miningPower || 1;
       upgradeCost = data.upgradeCost || 10;
+      hireCost = data.hireCost || 15;
+      minersCount = data.minersCount || 1;
     } else {
       coins = 0;
       miningPower = 1;
       upgradeCost = 10;
-      await set(dataRef, { coins, miningPower, upgradeCost });
+      hireCost = 15;
+      minersCount = 1;
+      await set(dataRef, { coins, miningPower, upgradeCost, hireCost, minersCount });
     }
     updateUI();
+    startAutoMining();
   }
 
   async function saveGameData(uid) {
     const dataRef = ref(db, 'users/' + uid);
-    await update(dataRef, { coins, miningPower, upgradeCost });
+    await update(dataRef, { coins, miningPower, upgradeCost, hireCost, minersCount });
+  }
+
+  // === Auto mining logic ===
+  function startAutoMining() {
+    if (isMiningAuto) return;
+    isMiningAuto = true;
+    autoMineProgress = 0;
+    requestAnimationFrame(autoMineLoop);
+  }
+
+  function autoMineLoop(timestamp) {
+    if (!isMiningAuto) return;
+    autoMineProgress += 16 / autoMineDuration; // приближение к 60 FPS
+    if (autoMineProgress >= 1) {
+      coins += miningPower * minersCount;
+      updateUI();
+      saveGameData(currentUser.uid);
+      playMineSound();
+      animateHammer();
+      autoMineProgress = 0;
+    }
+    progressBar.style.width = `${autoMineProgress * 100}%`;
+    requestAnimationFrame(autoMineLoop);
+  }
+
+  // === Hammer animation restart ===
+  function animateHammer() {
+    const hammer = document.getElementById('hammer');
+    hammer.style.animation = 'none';
+    // перезапускаем анимацию
+    void hammer.offsetWidth;
+    hammer.style.animation = '';
   }
 
   // === Button Handlers ===
-
   btnSignUp.onclick = async () => {
     authError.textContent = "";
     try {
@@ -362,7 +496,10 @@
     coins = 0;
     miningPower = 1;
     upgradeCost = 10;
+    hireCost = 15;
+    minersCount = 1;
     updateUI();
+    isMiningAuto = false;
     playClickSound();
   };
 
@@ -371,6 +508,7 @@
     updateUI();
     saveGameData(currentUser.uid);
     playMineSound();
+    animateHammer();
   };
 
   upgradeBtn.onclick = () => {
@@ -388,6 +526,21 @@
     }
   };
 
+  hireBtn.onclick = () => {
+    if (coins >= hireCost) {
+      coins -= hireCost;
+      minersCount += 1;
+      hireCost = Math.floor(hireCost * 2);
+      updateUI();
+      saveGameData(currentUser.uid);
+      gameError.textContent = "";
+      playUpgradeSound();
+    } else {
+      gameError.textContent = "Недостаточно золота для найма шахтёров!";
+      playErrorSound();
+    }
+  };
+
   // === Firebase Auth state observer ===
   onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -400,10 +553,12 @@
       currentUser = null;
       authDiv.style.display = "block";
       gameDiv.style.display = "none";
+      isMiningAuto = false;
     }
   });
 
   updateUI();
+
 </script>
 
 </body>
