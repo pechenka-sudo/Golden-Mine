@@ -1,57 +1,373 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Golden Mine</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Golden Mine — Авторизация</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #f0e68c, #daa520);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: #fff8dc;
+      padding: 40px 40px 60px;
+      border-radius: 20px;
+      width: 360px;
+      box-shadow: 0 10px 30px rgba(184, 134, 11, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 0 0 24px;
+      font-weight: 700;
+      font-size: 28px;
+      color: #b8860b;
+      text-align: center;
+      text-shadow: 0 0 5px #ffd700;
+    }
+    .tabs {
+      display: flex;
+      border-radius: 50px;
+      overflow: hidden;
+      box-shadow: inset 0 0 8px #b8860b;
+      margin-bottom: 30px;
+      user-select: none;
+      cursor: pointer;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px 0;
+      background: #fff3b0;
+      color: #6b4f00;
+      font-weight: 600;
+      text-align: center;
+      transition: background 0.3s, color 0.3s;
+      border-bottom: 4px solid transparent;
+      font-size: 16px;
+      letter-spacing: 0.05em;
+    }
+    .tab.active {
+      background: #b8860b;
+      color: white;
+      border-bottom: 4px solid #ffd700;
+      text-shadow: 0 0 8px #ffd700;
+    }
+    form {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    form.active {
+      display: flex;
+    }
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      padding: 12px 14px;
+      font-size: 16px;
+      border: 2px solid #b8860b;
+      border-radius: 10px;
+      outline-offset: 2px;
+      outline-color: #ffd700;
+      transition: border-color 0.3s;
+      font-family: 'Montserrat', sans-serif;
+      color: #4b3b00;
+    }
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="text"]:focus {
+      border-color: #ffdb58;
+      box-shadow: 0 0 8px #ffdb58;
+    }
+    button {
+      background: #b8860b;
+      border: none;
+      padding: 14px 0;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 17px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.4s, box-shadow 0.4s;
+      box-shadow: 0 4px 12px rgba(184, 134, 11, 0.6);
+      letter-spacing: 0.07em;
+      user-select: none;
+    }
+    button:hover {
+      background: #ffdb58;
+      color: #6b4f00;
+      box-shadow: 0 6px 20px rgba(255, 219, 88, 0.8);
+    }
+    .error {
+      color: #cc0000;
+      font-weight: 600;
+      font-size: 0.9rem;
+      height: 20px;
+      min-height: 20px;
+      user-select: none;
+    }
+    .welcome {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: #4b3b00;
+      text-align: center;
+      user-select: none;
+      letter-spacing: 0.05em;
+    }
+    .logout-btn {
+      margin-top: 20px;
+      width: 100%;
+      background: #cc3300;
+      box-shadow: 0 4px 14px rgba(204, 51, 0, 0.8);
+      user-select: none;
+    }
+    .logout-btn:hover {
+      background: #ff6655;
+      box-shadow: 0 6px 22px rgba(255, 102, 85, 0.9);
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(12px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    /* Рекламный баннер снизу */
+    #ad-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      background: rgba(0,0,0,0.5);
+      text-align: center;
+      padding: 8px 0;
+      z-index: 99999;
+    }
+    #ad-banner iframe {
+      width: 70%;
+      max-width: 468px;
+      height: auto;
+      border: none;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+    #ad-close {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 5px #00000088;
+      user-select: none;
+    }
+    #ad-close:hover {
+      background: rgba(255, 255, 255, 1);
+    }
+    #ad-close svg {
+      fill: #333;
+      width: 14px;
+      height: 14px;
+    }
+  </style>
 </head>
 <body>
-
-<div class="auth-container">
-  <div class="tabs">
-    <button id="tab-signin" class="tab active">Вход</button>
-    <button id="tab-signup" class="tab">Регистрация</button>
-  </div>
-
-  <div id="signin-form" class="form active">
-    <input id="signin-nick" placeholder="Ник" autocomplete="off" />
-    <input id="signin-pass" type="password" placeholder="Пароль" autocomplete="off" />
-    <button id="btn-signin">Войти</button>
-    <p class="error" id="signin-error"></p>
-  </div>
-
-  <div id="signup-form" class="form">
-    <input id="signup-nick" placeholder="Ник" autocomplete="off" />
-    <input id="signup-pass" type="password" placeholder="Пароль" autocomplete="off" />
-    <input id="signup-pass2" type="password" placeholder="Повторите пароль" autocomplete="off" />
-    <button id="btn-signup">Зарегистрироваться</button>
-    <p class="error" id="signup-error"></p>
-  </div>
-</div>
-
-<div id="game" class="hidden">
-  <header>
+  <div class="container" id="auth-container">
     <h1>Golden Mine</h1>
-    <div>Привет, <span id="player-nick"></span>!</div>
-    <button id="logout-btn">Выйти</button>
-  </header>
-  <main>
-    <p>Золото: <span id="coins">0</span></p>
-    <button id="mine-btn">Копать золото</button>
-  </main>
-</div>
-
-<!-- Рекламный баннер снизу -->
-<div class="ad-banner">
-  <input type="checkbox" id="close-ad" hidden />
-  <label for="close-ad" class="close-btn">✖</label>
-  <div class="ad-frame">
-    <iframe src="//acceptable.a-ads.com/2406373/?size=Adaptive" scrolling="no" frameborder="0"></iframe>
+    <div class="tabs">
+      <div class="tab active" data-tab="signup">Sign Up</div>
+      <div class="tab" data-tab="signin">Sign In</div>
+    </div>
+    <!-- Регистрация -->
+    <form id="signup-form" class="active">
+      <input type="text" id="signup-nickname" placeholder="Никнейм (3–15 символов)" minlength="3" maxlength="15" required />
+      <input type="email" id="signup-email" placeholder="Email" required />
+      <input type="password" id="signup-password" placeholder="Пароль (6+ символов)" minlength="6" required />
+      <div class="error" id="signup-error"></div>
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+    <!-- Вход -->
+    <form id="signin-form">
+      <input type="email" id="signin-email" placeholder="Email" required />
+      <input type="password" id="signin-password" placeholder="Пароль" required />
+      <div class="error" id="signin-error"></div>
+      <button type="submit">Войти</button>
+    </form>
+    <div class="welcome" id="welcome-msg" style="display:none"></div>
+    <button class="logout-btn" id="logout-btn" style="display:none">Выйти</button>
   </div>
-</div>
 
-<script type="module" src="script.js"></script>
+  <!-- Рекламный баннер -->
+  <div id="ad-banner">
+    <label for="ad-close" id="ad-close" title="Закрыть рекламу">
+      <svg viewBox="0 0 490 490" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 489.292,457.678 277.331,245.004 489.292,32.337 "/>
+      </svg>
+    </label>
+    <iframe data-aa="2406373" src="//acceptable.a-ads.com/2406373/?size=Adaptive" scrolling="no" title="advertisement"></iframe>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCXfzRrHa2t-y5TBJoipN0m_mv9bXjHmL8",
+      authDomain: "golden-mine-e7d50.firebaseapp.com",
+      databaseURL: "https://golden-mine-e7d50-default-rtdb.firebaseio.com",
+      projectId: "golden-mine-e7d50",
+      storageBucket: "golden-mine-e7d50.firebasestorage.app",
+      messagingSenderId: "49056047000",
+      appId: "1:49056047000:web:76e20efa45a0b8ffc415ed",
+      measurementId: "G-MMD56ZP5YE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // Элементы DOM
+    const signupForm = document.getElementById('signup-form');
+    const signinForm = document.getElementById('signin-form');
+    const signupError = document.getElementById('signup-error');
+    const signinError = document.getElementById('signin-error');
+    const welcomeMsg = document.getElementById('welcome-msg');
+    const logoutBtn = document.getElementById('logout-btn');
+    const tabs = document.querySelectorAll('.tab');
+    const signupNickname = document.getElementById('signup-nickname');
+
+    // Переключение вкладок
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (tab.dataset.tab === 'signup') {
+          signupForm.classList.add('active');
+          signinForm.classList.remove('active');
+          signupError.textContent = '';
+          signinError.textContent = '';
+        } else {
+          signupForm.classList.remove('active');
+          signinForm.classList.add('active');
+          signupError.textContent = '';
+          signinError.textContent = '';
+        }
+      });
+    });
+
+    // Регистрация
+    signupForm.addEventListener('submit', e => {
+      e.preventDefault();
+      signupError.textContent = '';
+
+      const nickname = signupNickname.value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+
+      if (nickname.length < 3 || nickname.length > 15) {
+        signupError.textContent = 'Никнейм должен быть от 3 до 15 символов.';
+        return;
+      }
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(userCredential => {
+          const user = userCredential.user;
+          // Запишем никнейм в профиль пользователя
+          updateProfile(user, { displayName: nickname })
+            .then(() => {
+              // Сохраним начальные данные пользователя в базе
+              set(ref(db, 'users/' + user.uid), {
+                nickname: nickname,
+                coins: 0,
+                createdAt: Date.now()
+              });
+              showWelcome(user);
+            });
+        })
+        .catch(error => {
+          signupError.textContent = error.message;
+        });
+    });
+
+    // Вход
+    signinForm.addEventListener('submit', e => {
+      e.preventDefault();
+      signinError.textContent = '';
+
+      const email = document.getElementById('signin-email').value.trim();
+      const password = document.getElementById('signin-password').value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(userCredential => {
+          showWelcome(userCredential.user);
+        })
+        .catch(error => {
+          signinError.textContent = error.message;
+        });
+    });
+
+    // Показать приветствие и скрыть формы
+    function showWelcome(user) {
+      signupForm.style.display = 'none';
+      signinForm.style.display = 'none';
+      welcomeMsg.style.display = 'block';
+      logoutBtn.style.display = 'block';
+      welcomeMsg.textContent = `Добро пожаловать, ${user.displayName || user.email}!`;
+    }
+
+    // Выход
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth).then(() => {
+        signupForm.style.display = '';
+        signinForm.style.display = '';
+        welcomeMsg.style.display = 'none';
+        logoutBtn.style.display = 'none';
+        signupError.textContent = '';
+        signinError.textContent = '';
+        signupForm.classList.add('active');
+        signinForm.classList.remove('active');
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[0].classList.add('active');
+      });
+    });
+
+    // Отслеживаем состояние пользователя при загрузке страницы
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        showWelcome(user);
+      } else {
+        signupForm.style.display = '';
+        signinForm.style.display = '';
+        welcomeMsg.style.display = 'none';
+        logoutBtn.style.display = 'none';
+        signupForm.classList.add('active');
+        signinForm.classList.remove('active');
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[0].classList.add('active');
+      }
+    });
+
+    // Закрытие рекламного баннера
+    document.getElementById('ad-close').addEventListener('click', () => {
+      document.getElementById('ad-banner').style.display = 'none';
+    });
+  </script>
 </body>
   <div style="position: absolute; z-index: 99999">
       <input autocomplete="off" type="checkbox" id="aadsstickyme80rm2l" hidden />
