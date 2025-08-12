@@ -26,6 +26,112 @@ const firebaseConfig = {
   measurementId: "G-MMD56ZP5YE",
 };
 
+// Инициализация аудио контекста и звуков
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playTone(freq, duration = 0.1, type = "sine", volume = 0.05) {
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  oscillator.type = type;
+  oscillator.frequency.value = freq;
+  gainNode.gain.value = volume;
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  oscillator.start();
+
+  oscillator.stop(audioCtx.currentTime + duration);
+  oscillator.onended = () => {
+    gainNode.disconnect();
+    oscillator.disconnect();
+  };
+}
+
+// Звук добычи (кира) — несколько частот в быстрой последовательности
+function playMineSound() {
+  playTone(350, 0.05, "square", 0.07);
+  setTimeout(() => playTone(450 + Math.random() * 40, 0.07, "triangle", 0.05), 60);
+}
+
+// Звук апгрейда — мелодичный переход вверх
+function playUpgradeSound() {
+  playTone(600, 0.12, "sine", 0.1);
+  setTimeout(() => playTone(720, 0.12, "sine", 0.08), 140);
+  setTimeout(() => playTone(840, 0.12, "sine", 0.06), 280);
+}
+
+// Звук ошибки — низкий мягкий бип
+function playErrorSound() {
+  playTone(220, 0.2, "sine", 0.1);
+}
+
+// Звук клика кнопки
+function playClickSound() {
+  playTone(500, 0.08, "triangle", 0.04);
+}
+
+// Мьют/анмьют звуков (для UX)
+let isMuted = false;
+function toggleMute() {
+  isMuted = !isMuted;
+  muteBtn.textContent = isMuted ? "Включить звук 🔈" : "Выключить звук 🔇";
+}
+
+// Добавим кнопку звука в UI
+const muteBtn = document.createElement("button");
+muteBtn.textContent = "Выключить звук 🔇";
+muteBtn.style.marginTop = "12px";
+muteBtn.style.width = "100%";
+muteBtn.style.borderRadius = "14px";
+muteBtn.style.padding = "12px 0";
+muteBtn.style.fontWeight = "700";
+muteBtn.style.cursor = "pointer";
+muteBtn.style.background = "#b8860b";
+muteBtn.style.color = "#fff";
+muteBtn.style.border = "none";
+muteBtn.addEventListener("click", toggleMute);
+document.getElementById("game").appendChild(muteBtn);
+
+// Используем звуки в логике:
+
+mineBtn.addEventListener("click", () => {
+  if (isMuted === false) playMineSound();
+  coins += miningPower;
+  updateCoinsUI();
+  saveGame();
+});
+
+upgradeBtn.addEventListener("click", () => {
+  if (coins >= upgradeCost) {
+    coins -= upgradeCost;
+    miningPower += 1;
+    upgradeCost = Math.floor(upgradeCost * 2.2);
+    updateCoinsUI();
+    updateUpgradeButton();
+    if (!isMuted) playUpgradeSound();
+    saveGame();
+    errorGame.textContent = "";
+  } else {
+    errorGame.textContent = "Недостаточно золота для улучшения!";
+    if (!isMuted) playErrorSound();
+  }
+});
+
+logoutBtn.addEventListener("click", () => {
+  signOut(auth);
+  if (!isMuted) playClickSound();
+  showAuth();
+});
+
+// И не забудь обновить функции updateCoinsUI и updateUpgradeButton для обновления интерфейса:
+
+function updateCoinsUI() {
+  coinsDiv.textContent = `Золото: ${coins}`;
+}
+function updateUpgradeButton() {
+  upgradeBtn.textContent = `Улучшить добычу (стоимость: ${upgradeCost})`;
+  upgradeBtn.disabled = coins < upgradeCost;
+}
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
