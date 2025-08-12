@@ -1,0 +1,414 @@
+import React, { useEffect, useState, useRef } from "react";
+
+/*
+Gold Mine — Single-file React component (Tailwind CSS)
+Features:
+- Firebase Realtime Database sync (modular SDK)
+- Anonymous UID (stored in localStorage)
+- Mining & idle income with upgrades
+- Animated SVG miners (not just buttons)
+- Procedural sounds via WebAudio API (no external files required)
+- Adaptive ad banner (user provided markup included)
+
+How to use:
+- Ensure Tailwind is configured in your React project.
+- Install Firebase: npm install firebase
+- Paste your firebaseConfig below (already included from the user)
+- Render <GoldMineGame /> in your app.
+*/
+
+// ----- Firebase setup (modular v9+) -----
+import { initializeApp } from "firebase/app";
+import {
+  getDatabase,
+  ref as dbRef,
+  onValue,
+  set as dbSet,
+  update as dbUpdate,
+} from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBvTtAiVdBFL3D9S7p77o59Osqvr3g5o5w",
+  authDomain: "idle-bank-ecd4c.firebaseapp.com",
+  projectId: "idle-bank-ecd4c",
+  storageBucket: "idle-bank-ecd4c.firebasestorage.app",
+  messagingSenderId: "620382532734",
+  appId: "1:620382532734:web:2bf17700e3ea279709142f",
+  measurementId: "G-RL9Q74FR4K",
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+// ----- Utilities -----
+function uidFromLocal() {
+  let uid = localStorage.getItem("gm_uid");
+  if (!uid) {
+    uid = "uid_" + Math.random().toString(36).slice(2, 12);
+    localStorage.setItem("gm_uid", uid);
+  }
+  return uid;
+}
+
+function formatNumber(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(2) + "K";
+  return Math.floor(n).toString();
+}
+
+// Simple procedural sounds using WebAudio
+function useSfx() {
+  const ctxRef = useRef(null);
+  useEffect(() => {
+    try {
+      ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      ctxRef.current = null;
+    }
+  }, []);
+
+  function beep(freq = 440, duration = 0.08, type = "sine", gain = 0.06) {
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + duration);
+  }
+
+  function mineSound() {
+    // two quick tones
+    beep(420, 0.06, "square", 0.05);
+    setTimeout(() => beep(620, 0.06, "sawtooth", 0.04), 70);
+  }
+
+  function levelUpSound() {
+    beep(900, 0.12, "sine", 0.09);
+    setTimeout(() => beep(1100, 0.08, "sine", 0.07), 120);
+  }
+
+  return { mineSound, levelUpSound, beep };
+}
+
+// ----- Main component -----
+export default function GoldMineGame() {
+  const uid = useRef(uidFromLocal()).current;
+  const sfx = useSfx();
+
+  // Game state
+  const [coins, setCoins] = useState(0);
+  const [miners, setMiners] = useState([ { level: 1, count: 1 } ]); // each entry is a miner tier
+  const [autoRate, setAutoRate] = useState(0); // coins per second from miners
+  const [lastSync, setLastSync] = useState(Date.now());
+  const [connected, setConnected] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const savingRef = useRef(false);
+
+  // Firebase refs
+  const userRef = dbRef(database, `goldmine/users/${uid}`);
+
+  // load from Firebase on mount and subscribe
+  useEffect(() => {
+    const off = onValue(userRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        // merge carefully (local wins if more recent)
+        if (!val.lastTimestamp || val.lastTimestamp <= lastSync) {
+          // remote older or equal, ignore
+        } else {
+          // remote is newer
+          setCoins(val.coins || 0);
+          setMiners(val.miners || [{ level:1, count:1 }]);
+          setLastSync(val.lastTimestamp || Date.now());
+        }
+      } else {
+        // new player — initialize
+        dbSet(userRef, {
+          coins: 0,
+          miners: [{ level:1, count:1 }],
+          lastTimestamp: Date.now(),
+        });
+      }
+      setConnected(true);
+    });
+    return () => off();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // recalc auto income
+  useEffect(() => {
+    // each miner tier contributes count * level * baseRate
+    const basePerSec = 1; // base coin per second for level1
+    const rate = miners.reduce((acc, m) => acc + m.count * Math.pow(1.9, m.level-1) * basePerSec, 0);
+    setAutoRate(rate);
+  }, [miners]);
+
+  // passive income loop
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCoins((c) => {
+        const delta = autoRate / 4; // tick 4 times a second for smoothness
+        const next = c + delta;
+        return next;
+      });
+    }, 250);
+    return () => clearInterval(interval);
+  }, [autoRate]);
+
+  // auto-save to firebase every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (savingRef.current) return;
+      savingRef.current = true;
+      const payload = {
+        coins: Math.floor(coins),
+        miners,
+        lastTimestamp: Date.now(),
+      };
+      dbSet(userRef, payload).finally(() => {
+        savingRef.current = false;
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [coins, miners]);
+
+  // Click-to-mine action — animated and sound
+  function mineClick() {
+    const gained = 1 + Math.floor(Math.random() * 3);
+    setCoins((c) => c + gained);
+    if (!isMuted) sfx.mineSound();
+  }
+
+  // Upgrade a miner tier
+  function upgradeTier(index) {
+    const tier = miners[index];
+    const cost = Math.floor(50 * Math.pow(2.5, tier.level - 1));
+    if (coins < cost) return;
+    setCoins((c) => c - cost);
+    setMiners((ms) => {
+      const copy = ms.map((m, i) => ({ ...m }));
+      copy[index].level += 1;
+      return copy;
+    });
+    if (!isMuted) sfx.levelUpSound();
+  }
+
+  // Buy a new miner slot
+  function buyMinerSlot() {
+    const cost = Math.floor(200 * Math.pow(3, miners.length - 1));
+    if (coins < cost) return;
+    setCoins((c) => c - cost);
+    setMiners((ms) => [ ...ms, { level:1, count:1 } ]);
+    if (!isMuted) sfx.beep(740, 0.08, "triangle", 0.06);
+  }
+
+  // Hire a miner (increase count)
+  function hireMiner(index) {
+    const cost = Math.floor(25 * Math.pow(1.8, miners[index].count));
+    if (coins < cost) return;
+    setCoins((c) => c - cost);
+    setMiners((ms) => {
+      const copy = ms.map((m) => ({ ...m }));
+      copy[index].count += 1;
+      return copy;
+    });
+    if (!isMuted) sfx.beep(520, 0.06, "sine", 0.04);
+  }
+
+  // Reset / export save (for debug)
+  function resetSave() {
+    setCoins(0);
+    setMiners([{ level:1, count:1 }]);
+    dbSet(userRef, { coins:0, miners:[{ level:1, count:1 }], lastTimestamp: Date.now() });
+  }
+
+  // quick visual miner component — animated SVG
+  function MinerSVG({ level = 1, count = 1 }) {
+    const scale = 0.8 + (level - 1) * 0.06;
+    const bob = 6 + (level - 1) * 2;
+    const pickAngle = -18 - (level - 1) * 4;
+    return (
+      <svg width={90*scale} height={110*scale} viewBox="0 0 90 110" className="mx-auto">
+        <g transform={`translate(0,${(110 - 110*scale) / 2}) scale(${scale})`}>
+          {/* body */}
+          <ellipse cx="45" cy="68" rx="22" ry="18" fill="#6b4f2b" />
+          {/* head */}
+          <circle cx="45" cy="40" r="14" fill="#f0c27b" />
+          {/* helmet */}
+          <rect x="28" y="28" width="34" height="12" rx="5" fill="#c9d1d9" />
+          {/* pickaxe */}
+          <g transform={`translate(48,48) rotate(${pickAngle})`}>
+            <rect x="20" y="-2" width="36" height="6" rx="3" fill="#7b6b50" />
+            <polygon points="56,1 66,-9 66,11" fill="#9b7d4e" />
+          </g>
+          {/* dust / gold sparkle */}
+          <g>
+            <circle cx="18" cy={20 - (Math.sin(Date.now()/600) * bob) } r="2" fill="#ffd84d" opacity="0.9" />
+            <circle cx="72" cy={28 + (Math.cos(Date.now()/800) * bob)} r="1.6" fill="#ffd84d" opacity="0.8" />
+          </g>
+          {/* count bubble */}
+          <g transform="translate(50,82)">
+            <rect x="0" y="0" width="36" height="18" rx="8" fill="#0f172a" opacity="0.85" />
+            <text x="18" y="13" fontSize="11" textAnchor="middle" fill="#fff">x{count}</text>
+          </g>
+        </g>
+      </svg>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-amber-100 p-4">
+      {/* ——— Ad banner (user provided) ——— */}
+      <div style={{ position: "absolute", zIndex: 99999 }}>
+        <input autoComplete="off" type="checkbox" id="aadsstickyme745b3w" hidden />
+        <div style={{ paddingTop: "auto", paddingBottom: 0 }}>
+          <div style={{ width: "100%", height: "auto", position: "fixed", textAlign: "center", fontSize: 0, top: 0, left: 0, right: 0, margin: "auto" }}>
+            <label htmlFor="aadsstickyme745b3w" style={{ top: "50%", transform: "translateY(-50%)", right: 24, position: "absolute", borderRadius: 4, background: "rgba(248, 248, 249, 0.70)", padding: 4, zIndex: 99999, cursor: "pointer" }}>
+              <svg fill="#000000" height="16px" width="16px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 490">
+                <polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 489.292,457.678 277.331,245.004 489.292,32.337 "/>
+              </svg>
+            </label>
+            <div id="frame" style={{ width: "100%", margin: "auto", background: "rgba(0, 0, 0, 0.50)", position: "relative", zIndex: 99998 }}>
+              <iframe data-aa="2406373" src="//acceptable.a-ads.com/2406373/?size=Adaptive" style={{ border: 0, padding: 0, width: "70%", height: "auto", overflow: "hidden", margin: "auto" }}></iframe>
+            </div>
+          </div>
+          <style>{`#aadsstickyme745b3w:checked + div { display: none; }`}</style>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto pt-20">
+        <header className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight">💰 Золотая шахта</h1>
+            <p className="text-sm text-gray-600">Качай шахтеров, собирай золото, строй империю шахт</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-lg font-semibold">{formatNumber(coins)}</div>
+              <div className="text-xs text-gray-600">монет</div>
+            </div>
+            <button className="px-3 py-2 rounded-lg bg-gray-800 text-white text-sm" onClick={() => setIsMuted((m) => !m)}>{isMuted ? '🔇' : '🔊'}</button>
+            <button className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm" onClick={resetSave}>Сброс</button>
+          </div>
+        </header>
+
+        <main className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Mine view */}
+          <section className="col-span-2 bg-white/80 p-6 rounded-2xl shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Шахта</h2>
+              <div className="text-sm text-gray-600">Авто: {formatNumber(autoRate)}/с</div>
+            </div>
+
+            <div className="bg-gradient-to-b from-amber-200 to-amber-100 p-4 rounded-xl relative overflow-hidden" style={{ minHeight: 360 }}>
+              {/* big clickable mine rock */}
+              <div className="mx-auto w-2/3 flex flex-col items-center justify-center select-none">
+                <div className="relative" style={{ width: 260 }}>
+                  <div onClick={() => { mineClick(); }} className="cursor-pointer rounded-2xl shadow-inner p-6 bg-[radial-gradient(ellipse_at_center,_#fef3c7,_#f59e0b)]">
+                    <div className="text-center">
+                      <svg width="180" height="180" viewBox="0 0 180 180" className="mx-auto mb-2 animate-bounce-slow">
+                        <circle cx="90" cy="90" r="70" fill="#5b3e07" stroke="#facc15" strokeWidth="6" />
+                        <g>
+                          <path d="M40 120 L60 80 L80 120 Z" fill="#f59e0b" opacity="0.9" />
+                          <path d="M110 60 L130 20 L150 60 Z" fill="#ffd54f" opacity="0.9" />
+                        </g>
+                      </svg>
+                      <div className="text-lg font-semibold">Нажми — добыть</div>
+                      <div className="text-xs text-gray-700">Каждый клик даёт от 1 до 3 монет</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full mt-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    {miners.map((m, i) => (
+                      <div key={i} className="bg-white/60 p-3 rounded-lg shadow-sm flex items-center gap-3">
+                        <div style={{ width: 110 }}>
+                          <MinerSVG level={m.level} count={m.count} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-baseline justify-between">
+                            <div className="font-semibold">Шахтёр {i+1}</div>
+                            <div className="text-sm text-gray-600">Lvl {m.level}</div>
+                          </div>
+                          <div className="text-xs text-gray-700 mb-2">Производительность: {Math.floor(m.count * Math.pow(1.9, m.level-1))}/с</div>
+                          <div className="flex gap-2">
+                            <button onClick={() => hireMiner(i)} className="px-2 py-1 rounded bg-green-600 text-white text-sm">Найм ({formatNumber(Math.floor(25 * Math.pow(1.8, m.count)))})</button>
+                            <button onClick={() => upgradeTier(i)} className="px-2 py-1 rounded bg-blue-600 text-white text-sm">Улучшить ({formatNumber(Math.floor(50 * Math.pow(2.5, m.level - 1)))})</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex gap-3">
+                    <button onClick={buyMinerSlot} className="px-3 py-2 rounded-lg bg-indigo-600 text-white">Нанять новый тип ({formatNumber(Math.floor(200 * Math.pow(3, miners.length - 1)))})</button>
+                    <div className="text-sm text-gray-600 flex items-center">Типов: {miners.length}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative gold clouds */}
+              <div className="absolute left-4 bottom-4 opacity-60 text-yellow-600 text-9xl select-none" style={{ transform: 'rotate(-12deg)' }}>⛏️</div>
+            </div>
+          </section>
+
+          {/* Right sidebar */}
+          <aside className="bg-white/90 p-6 rounded-2xl shadow-md">
+            <div className="mb-4">
+              <h3 className="font-bold">Статус</h3>
+              <div className="text-sm text-gray-600">UID: <span className="font-mono text-xs">{uid}</span></div>
+              <div className="text-sm text-gray-600">Синхронизирован: {connected ? 'да' : '...'}</div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-bold">Магазин</h3>
+              <div className="mt-2 flex flex-col gap-2">
+                <button className="px-3 py-2 rounded bg-amber-500 text-white" onClick={() => {
+                  // buy offline booster — add coins
+                  if (coins < 500) return;
+                  setCoins((c) => c - 500 + 800);
+                }}>Купить «Инвестор» (500 → +800)</button>
+                <button className="px-3 py-2 rounded bg-amber-400 text-white" onClick={() => {
+                  if (coins < 1200) return;
+                  setCoins((c) => c - 1200 + 2600);
+                }}>Пакет золота (1200 → +2600)</button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-bold">Прогресс</h3>
+              <div className="text-sm text-gray-600">Авто: {formatNumber(autoRate)}/с</div>
+              <div className="text-sm text-gray-600">Монет всего: {formatNumber(Math.floor(coins))}</div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-bold">Звуки</h3>
+              <div className="flex gap-2 mt-2">
+                <button className="px-2 py-1 rounded border" onClick={() => sfx.beep(440,0.08)}>Тест</button>
+                <button className="px-2 py-1 rounded border" onClick={() => setIsMuted(false)}>Вкл</button>
+                <button className="px-2 py-1 rounded border" onClick={() => setIsMuted(true)}>Выкл</button>
+              </div>
+            </div>
+
+            <div className="text-xs text-gray-500">Игра автоматически сохраняется в Firebase Realtime DB. Ваш прогресс привязан к UID в localStorage.</div>
+          </aside>
+        </main>
+
+        <footer className="mt-8 text-center text-gray-600 text-sm">Made with ❤️ — Золотая шахта</footer>
+      </div>
+
+      {/* little animations CSS */}
+      <style>{`
+        @keyframes bounceSlow { 0%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } 100%{ transform: translateY(0) } }
+        .animate-bounce-slow { animation: bounceSlow 3s infinite alternate; }
+      `}</style>
+    </div>
+  );
+}
