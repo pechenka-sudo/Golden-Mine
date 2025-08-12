@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
+  onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
@@ -11,7 +12,6 @@ import {
   ref,
   set,
   get,
-  onValue,
   update,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
@@ -32,27 +32,28 @@ const db = getDatabase(app);
 
 const tabSignIn = document.getElementById("tab-signin");
 const tabSignUp = document.getElementById("tab-signup");
-const formSignIn = document.getElementById("form-signin");
-const formSignUp = document.getElementById("form-signup");
+const formSignIn = document.getElementById("signin-form");
+const formSignUp = document.getElementById("signup-form");
+
 const signinNick = document.getElementById("signin-nick");
 const signinPass = document.getElementById("signin-pass");
 const signupNick = document.getElementById("signup-nick");
 const signupPass = document.getElementById("signup-pass");
 const signupPass2 = document.getElementById("signup-pass2");
+
 const signinError = document.getElementById("signin-error");
 const signupError = document.getElementById("signup-error");
 
-const gameContainer = document.getElementById("game-container");
+const game = document.getElementById("game");
 const playerNick = document.getElementById("player-nick");
 const coinsEl = document.getElementById("coins");
 const mineBtn = document.getElementById("mine-btn");
 const logoutBtn = document.getElementById("logout-btn");
 
 let coins = 0;
-let currentUser = null;
 let nickname = "";
+let currentUser = null;
 
-// Таб переключения
 tabSignIn.onclick = () => {
   tabSignIn.classList.add("active");
   tabSignUp.classList.remove("active");
@@ -61,6 +62,7 @@ tabSignIn.onclick = () => {
   signinError.textContent = "";
   signupError.textContent = "";
 };
+
 tabSignUp.onclick = () => {
   tabSignUp.classList.add("active");
   tabSignIn.classList.remove("active");
@@ -70,12 +72,10 @@ tabSignUp.onclick = () => {
   signupError.textContent = "";
 };
 
-// Валидация ника — только буквы/цифры, 3-15 символов
 function isValidNick(nick) {
   return /^[a-zA-Z0-9_-]{3,15}$/.test(nick);
 }
 
-// Регистрация
 document.getElementById("btn-signup").onclick = async () => {
   signupError.textContent = "";
   const nick = signupNick.value.trim();
@@ -100,36 +100,28 @@ document.getElementById("btn-signup").onclick = async () => {
   }
 
   try {
-    // Проверяем уникальность ника (в БД nicknames)
     const nickRef = ref(db, "nicknames/" + nick.toLowerCase());
     const snap = await get(nickRef);
     if (snap.exists()) {
       signupError.textContent = "Ник занят, выберите другой";
       return;
     }
-
-    // Создаём учётку в Firebase Auth с фиктивным email
     const email = nick.toLowerCase() + "@goldmine.local";
     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
     currentUser = userCred.user;
     nickname = nick;
 
-    // Сохраняем ник и стартовый прогресс
     await set(ref(db, "users/" + currentUser.uid), {
       nickname,
       coins: 0,
     });
-    // Регистрируем ник для уникальности
     await set(nickRef, currentUser.uid);
-
     startGame();
-
   } catch (e) {
     signupError.textContent = e.message;
   }
 };
 
-// Вход
 document.getElementById("btn-signin").onclick = async () => {
   signinError.textContent = "";
   const nick = signinNick.value.trim();
@@ -142,12 +134,11 @@ document.getElementById("btn-signin").onclick = async () => {
     signinError.textContent = "Неверный формат ника";
     return;
   }
+
   try {
     const email = nick.toLowerCase() + "@goldmine.local";
     const userCred = await signInWithEmailAndPassword(auth, email, pass);
     currentUser = userCred.user;
-
-    // Загружаем прогресс
     const snap = await get(ref(db, "users/" + currentUser.uid));
     if (snap.exists()) {
       const val = snap.val();
@@ -158,20 +149,18 @@ document.getElementById("btn-signin").onclick = async () => {
       nickname = nick;
     }
     startGame();
-
-  } catch (e) {
+  } catch {
     signinError.textContent = "Неверный ник или пароль";
   }
 };
 
 function startGame() {
-  document.querySelector(".auth-wrapper").classList.add("hidden");
-  gameContainer.classList.remove("hidden");
+  document.querySelector(".auth-container").classList.add("hidden");
+  game.classList.remove("hidden");
   playerNick.textContent = nickname;
   coinsEl.textContent = coins;
 }
 
-// Копать золото
 mineBtn.onclick = () => {
   coins++;
   coinsEl.textContent = coins;
@@ -180,14 +169,13 @@ mineBtn.onclick = () => {
   }
 };
 
-// Выход
 logoutBtn.onclick = async () => {
   await signOut(auth);
   currentUser = null;
   coins = 0;
   nickname = "";
-  gameContainer.classList.add("hidden");
-  document.querySelector(".auth-wrapper").classList.remove("hidden");
+  game.classList.add("hidden");
+  document.querySelector(".auth-container").classList.remove("hidden");
   signinNick.value = "";
   signinPass.value = "";
   signupNick.value = "";
@@ -196,4 +184,4 @@ logoutBtn.onclick = async () => {
   signinError.textContent = "";
   signupError.textContent = "";
   tabSignIn.click();
-}
+};
