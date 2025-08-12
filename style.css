@@ -1,111 +1,28 @@
-:root{
-  --bg:#0b1220;
-  --card:#0f1724;
-  --accent:#f6c84c;
-  --muted:#9aa6b2;
-}
-*{box-sizing:border-box}
-html,body{height:100%;}
-body{
-  margin:0;
-  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
-  background:linear-gradient(180deg,var(--bg),#07101a 80%);
-  color:#e6eef6;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
+body {
+  background: #222;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
 }
 
-/* Top */
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px 20px;
-  gap:12px;
-}
-.topbar h1{margin:0;font-size:20px;letter-spacing:0.6px}
-.status{display:flex;align-items:center;gap:10px}
-.coins{
-  background:linear-gradient(90deg,#1f2937,#111827);
-  padding:8px 12px;border-radius:10px;font-weight:700;color:var(--accent);
-  min-width:86px;text-align:center;
-}
-.icon{background:transparent;border:0;color:inherit;font-size:18px;cursor:pointer}
-
-/* Layout */
-.container{
-  display:grid;
-  grid-template-columns: 1fr 360px;
-  gap:20px;
-  width:1100px;max-width:96%;margin:12px auto;flex:1;
-  align-items:start;
+.hidden {
+  display: none;
 }
 
-/* Mine area */
-.mine{
-  background:linear-gradient(180deg,#071422,#0c2430);
-  border-radius:18px;padding:30px;position:relative;overflow:hidden;
-  box-shadow:0 10px 30px rgba(2,6,23,0.6);
-  min-height:520px;
-}
-.rock{
-  width:360px;height:360px;border-radius:20px;margin:0 auto;
-  background:radial-gradient(circle at 30% 30%,#6b4f2b 0%, #5a3f1f 30%, #412e16 70%);
-  box-shadow: inset -20px -12px 40px rgba(0,0,0,0.5), 0 8px 30px rgba(0,0,0,0.6);
-  display:flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:transform .12s ease;
-  position:relative;
+input, button {
+  padding: 8px;
+  margin: 5px;
+  border-radius: 5px;
+  border: none;
 }
 
-/* sparkle SVG inside .rock */
-.rock::after{
-  content:"";
-  position:absolute;left:18%;top:12%;width:48px;height:48px;
-  background:conic-gradient(from 200deg,#ffd54f 0 30%, transparent 31% 100%);
-  filter:blur(6px);opacity:.9;border-radius:20px;transform:rotate(14deg);
+button {
+  cursor: pointer;
+  background: gold;
+  font-weight: bold;
 }
 
-/* Click bounce */
-.rock:active{transform:scale(.98) translateY(2px)}
-
-/* hint text */
-.clickHint{
-  text-align:center;color:var(--muted);margin-top:14px;font-size:13px;
+button:hover {
+  background: orange;
 }
-
-/* Panel */
-.panel{
-  background:linear-gradient(180deg,#05121a,#071827);
-  padding:18px;border-radius:14px;min-height:320px;
-  box-shadow:0 8px 24px rgba(1,8,15,0.6)
-}
-.section{margin-bottom:16px}
-.section h2{margin:0 0 8px 0;font-size:15px}
-.minersList{display:flex;flex-direction:column;gap:8px}
-.minerCard{
-  display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);
-  padding:8px;border-radius:10px;
-}
-.minerSVG{width:64px;height:64px;flex:0 0 64px}
-.minerInfo{flex:1}
-.minerInfo .title{font-weight:700}
-.row{display:flex;gap:8px;margin-top:6px}
-.btn{padding:6px 8px;border-radius:8px;border:0;cursor:pointer;font-weight:600}
-.buy{background:linear-gradient(90deg,#0ea5a3,#06b6d4);color:#031018}
-.upg{background:linear-gradient(90deg,#2563eb,#7c3aed);color:white}
-.wide{width:100%;padding:10px 12px;border-radius:10px;background:linear-gradient(90deg,#b78b1e,#facc15);color:#06121a;border:0;cursor:pointer;font-weight:700}
-.red{background:linear-gradient(90deg,#7f1d1d,#ef4444);color:white}
-
-/* footer */
-.footer{text-align:center;padding:12px;color:var(--muted);font-size:13px}
-
-/* small responsive */
-@media(max-width:1000px){
-  .container{grid-template-columns:1fr}
-  .panel{order:2;margin-top:8px}
-}
-.mono{font-family:monospace;font-size:13px;color:var(--muted)}
-.small{font-size:13px;color:var(--muted)}
