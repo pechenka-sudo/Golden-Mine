@@ -5,50 +5,49 @@
 body {
   margin: 0; padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #121212;
+  background: linear-gradient(135deg, #2a2a2a, #121212);
   color: #eee;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
   user-select: none;
 }
 
-.auth-wrapper {
-  background: #1f1f1f;
-  padding: 30px;
-  border-radius: 10px;
-  width: 320px;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+.auth-container {
+  background: #222;
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px #f1c40f;
+  width: 350px;
   text-align: center;
-  position: relative;
 }
 
 .tabs {
   display: flex;
-  margin-bottom: 20px;
-  border-radius: 8px;
+  margin-bottom: 25px;
+  border-radius: 10px;
   overflow: hidden;
-  border: 2px solid gold;
-  background: #222;
+  border: 2px solid #f1c40f;
+  background: #333;
 }
 
 .tab {
   flex: 1;
-  padding: 10px;
+  padding: 12px 0;
   cursor: pointer;
   font-weight: 600;
-  background: #222;
-  color: gold;
-  transition: background 0.3s ease;
+  color: #f1c40f;
+  background: #333;
   border: none;
   outline: none;
+  transition: background 0.3s ease;
   user-select: none;
 }
 
 .tab.active {
-  background: gold;
-  color: #121212;
+  background: #f1c40f;
+  color: #222;
   font-weight: 700;
 }
 
@@ -62,69 +61,119 @@ body {
 }
 
 .form input {
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 6px;
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
   border: none;
   font-size: 16px;
 }
 
 .form button {
-  padding: 12px;
-  margin-top: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  background: #f1c40f;
   border: none;
-  background: gold;
-  color: #121212;
+  border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
-  border-radius: 6px;
+  color: #222;
+  font-size: 18px;
   transition: background 0.3s ease;
 }
 
 .form button:hover {
-  background: #e6b800;
+  background: #d4ac0d;
 }
 
 .error {
-  margin-top: 10px;
+  margin-top: 8px;
   color: #ff5252;
-  font-weight: 600;
   min-height: 20px;
+  font-weight: 600;
 }
 
 .hidden {
   display: none !important;
 }
 
-#game-container {
-  width: 360px;
+#game {
   background: #222;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 30px gold;
+  padding: 25px 35px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px #f1c40f;
+  width: 380px;
   text-align: center;
+  color: #f1c40f;
 }
 
-#game-container header {
+#game header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  color: gold;
+  margin-bottom: 25px;
 }
 
-#game-container main button {
-  padding: 12px 20px;
-  font-size: 18px;
-  border-radius: 8px;
+#game header h1 {
+  margin: 0;
+}
+
+#game header button {
+  background: #f1c40f;
   border: none;
-  background: gold;
-  color: #121212;
-  cursor: pointer;
+  border-radius: 10px;
+  padding: 8px 16px;
   font-weight: 700;
+  cursor: pointer;
+  color: #222;
   transition: background 0.3s ease;
 }
 
-#game-container main button:hover {
-  background: #e6b800;
+#game header button:hover {
+  background: #d4ac0d;
+}
+
+#game main button {
+  padding: 14px 28px;
+  font-size: 20px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  background: #f1c40f;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#game main button:hover {
+  background: #d4ac0d;
+}
+
+/* Баннер */
+.ad-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 0;
+  z-index: 100000;
+  text-align: center;
+}
+
+.ad-frame iframe {
+  width: 70%;
+  max-width: 480px;
+  height: 60px;
+  border: none;
+}
+
+.close-btn {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  color: #f1c40f;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  z-index: 100001;
 }
