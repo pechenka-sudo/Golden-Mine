@@ -3,371 +3,408 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Golden Mine — Игра с авторизацией</title>
+  <title>Golden Mine - Игра с авторизацией и рекламой</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    /* Reset */
     * {
       box-sizing: border-box;
+      user-select: none;
     }
     body {
-      margin: 0; padding: 0;
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #f0e68c, #daa520);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      margin: 0; padding: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh;
       color: #4b3b00;
-      user-select: none;
     }
     #app {
       background: #fff8dc;
-      border-radius: 20px;
-      width: 360px;
-      box-shadow: 0 10px 30px rgba(184, 134, 11, 0.4);
+      padding: 30px 25px;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(184, 134, 11, 0.6);
+      width: 350px;
+      max-width: 95vw;
+      text-align: center;
+      position: relative;
       overflow: hidden;
-      padding: 30px 30px 60px;
     }
     h1 {
-      margin: 0 0 20px;
-      font-weight: 700;
-      font-size: 26px;
       color: #b8860b;
-      text-align: center;
-      text-shadow: 0 0 5px #ffd700;
-    }
-    /* Вкладки */
-    .tabs {
-      display: flex;
-      border-radius: 50px;
-      overflow: hidden;
-      box-shadow: inset 0 0 8px #b8860b;
-      margin-bottom: 25px;
-      user-select: none;
-      cursor: pointer;
-    }
-    .tab {
-      flex: 1;
-      padding: 12px 0;
-      background: #fff3b0;
-      color: #6b4f00;
-      font-weight: 600;
-      text-align: center;
-      transition: background 0.3s, color 0.3s;
-      border-bottom: 4px solid transparent;
-      font-size: 16px;
-      letter-spacing: 0.05em;
-    }
-    .tab.active {
-      background: #b8860b;
-      color: white;
-      border-bottom: 4px solid #ffd700;
-      text-shadow: 0 0 8px #ffd700;
-    }
-    /* Формы */
-    form {
-      display: none;
-      flex-direction: column;
-      gap: 18px;
-      animation: fadeIn 0.5s ease forwards;
-    }
-    form.active {
-      display: flex;
+      margin-bottom: 24px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
     }
     input[type="email"],
-    input[type="password"],
-    input[type="text"] {
-      padding: 12px 14px;
-      font-size: 16px;
+    input[type="password"] {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0 14px 0;
+      border-radius: 12px;
       border: 2px solid #b8860b;
-      border-radius: 10px;
+      font-size: 16px;
       outline-offset: 2px;
       outline-color: #ffd700;
-      transition: border-color 0.3s;
-      font-family: 'Montserrat', sans-serif;
-      color: #4b3b00;
+      transition: border-color 0.3s ease;
     }
     input[type="email"]:focus,
-    input[type="password"]:focus,
-    input[type="text"]:focus {
+    input[type="password"]:focus {
       border-color: #ffdb58;
-      box-shadow: 0 0 8px #ffdb58;
     }
     button {
-      background: #b8860b;
-      border: none;
+      width: 100%;
       padding: 14px 0;
+      margin-top: 14px;
       border-radius: 14px;
       font-weight: 700;
-      font-size: 17px;
-      color: white;
+      font-size: 16px;
+      border: none;
+      background: #b8860b;
+      color: #fff;
       cursor: pointer;
-      transition: background 0.4s, box-shadow 0.4s;
-      box-shadow: 0 4px 12px rgba(184, 134, 11, 0.6);
-      letter-spacing: 0.07em;
+      transition: background-color 0.3s ease;
       user-select: none;
     }
-    button:hover {
-      background: #ffdb58;
+    button:hover:not(:disabled) {
+      background-color: #ffdb58;
       color: #6b4f00;
-      box-shadow: 0 6px 20px rgba(255, 219, 88, 0.8);
+    }
+    button:disabled {
+      background-color: #d3b97a;
+      cursor: default;
+      color: #6b4f00;
     }
     .error {
-      color: #cc0000;
+      height: 22px;
+      margin: 4px 0 8px 0;
+      color: #c53030;
       font-weight: 600;
-      font-size: 0.9rem;
-      height: 20px;
-      min-height: 20px;
-      user-select: none;
+      min-height: 22px;
     }
-    .welcome {
-      margin-top: 10px;
-      font-weight: 600;
-      font-size: 1.15rem;
-      color: #4b3b00;
-      text-align: center;
-      user-select: none;
-      letter-spacing: 0.05em;
-    }
-    .logout-btn {
-      margin-top: 20px;
-      width: 100%;
-      background: #cc3300;
-      box-shadow: 0 4px 14px rgba(204, 51, 0, 0.8);
-      user-select: none;
-    }
-    .logout-btn:hover {
-      background: #ff6655;
-      box-shadow: 0 6px 22px rgba(255, 102, 85, 0.9);
-    }
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(12px);}
-      to {opacity: 1; transform: translateY(0);}
-    }
-    /* Игра */
     #game {
       display: none;
-      flex-direction: column;
-      gap: 20px;
-      text-align: center;
+      user-select: none;
     }
     #coins {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-shadow: 0 0 6px #ffd700;
-      color: #b8860b;
-      user-select: text;
+      font-weight: 900;
+      font-size: 26px;
+      margin-bottom: 18px;
+      text-shadow: 0 0 8px #b8860b;
+    }
+    #user-email {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 12px;
+      display: block;
+      color: #5f4b00;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .btn-small {
+      width: 48%;
+      display: inline-block;
+      margin: 10px 1%;
+      font-size: 14px;
+      padding: 10px 0;
+      border-radius: 12px;
+      font-weight: 600;
     }
     #mine-btn {
-      padding: 20px 0;
-      font-size: 22px;
-      border-radius: 20px;
-      background: linear-gradient(45deg, #ffcc33, #b8860b);
-      box-shadow: 0 6px 14px rgba(184,134,11,0.7);
-      cursor: pointer;
-      transition: background 0.3s;
-      font-weight: 700;
-      user-select: none;
-      color: #4b3b00;
-      border: none;
-    }
-    #mine-btn:hover {
-      background: linear-gradient(45deg, #ffd54f, #ffb300);
-      box-shadow: 0 8px 22px rgba(255, 213, 79, 0.9);
+      background: #d1af43;
+      box-shadow: 0 3px 10px #d1af4370;
     }
     #upgrade-btn {
-      background: #cfa93f;
-      padding: 14px 0;
-      font-weight: 700;
-      font-size: 18px;
-      border-radius: 14px;
-      border: none;
-      box-shadow: 0 4px 12px rgba(207, 169, 63, 0.7);
-      cursor: pointer;
-      transition: background 0.3s;
-      color: #4b3b00;
-      user-select: none;
+      background: #a3740f;
+      box-shadow: 0 3px 10px #a3740f70;
+      color: #fff;
     }
-    #upgrade-btn:disabled {
-      background: #e3d8a8;
-      color: #999;
-      cursor: default;
-      box-shadow: none;
+    #logout-btn {
+      background: #a63232;
+      box-shadow: 0 3px 10px #a6323270;
+      color: #fff;
+      margin-top: 28px;
     }
-    #upgrade-btn:hover:enabled {
-      background: #d7c042;
-      box-shadow: 0 6px 18px rgba(215, 192, 66, 0.9);
-    }
-    #error-game {
-      color: #cc0000;
-      font-weight: 600;
-      font-size: 0.9rem;
-      height: 20px;
-      min-height: 20px;
-      user-select: none;
-      margin-top: -10px;
-    }
-    /* Рекламный баннер снизу */
-    #ad-banner {
+    /* Banner styles */
+    #banner-container {
       position: fixed;
       bottom: 0;
       left: 0; right: 0;
+      width: 100%;
       background: rgba(0,0,0,0.5);
       text-align: center;
-      padding: 8px 0;
       z-index: 99999;
+      padding: 10px 0 0 0;
     }
-    #ad-banner iframe {
-      width: 70%;
-      max-width: 468px;
-      height: auto;
-      border: none;
-      overflow: hidden;
+    #banner-frame {
       margin: 0 auto;
+      width: 70%;
+      height: auto;
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #0009 inset;
     }
-    #ad-close {
+    #banner-close-label {
       position: absolute;
-      right: 10px;
       top: 50%;
+      right: 24px;
       transform: translateY(-50%);
+      background: rgba(248,248,249,0.7);
+      padding: 6px 8px;
+      border-radius: 6px;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 5px #00000088;
+      z-index: 100000;
       user-select: none;
     }
-    #ad-close:hover {
-      background: rgba(255, 255, 255, 1);
-    }
-    #ad-close svg {
-      fill: #333;
-      width: 14px;
-      height: 14px;
+    #banner-close-label svg {
+      display: block;
+      fill: #000000;
+      width: 20px;
+      height: 20px;
     }
   </style>
 </head>
 <body>
+
   <div id="app">
-    <!-- Авторизация -->
     <div id="auth">
       <h1>Golden Mine</h1>
-      <div class="tabs">
-        <div class="tab active" data-tab="signup">Sign Up</div>
-        <div class="tab" data-tab="signin">Sign In</div>
-      </div>
-      <!-- Регистрация -->
-      <form id="signup-form" class="active">
-        <input type="text" id="signup-nickname" placeholder="Никнейм (3–15 символов)" minlength="3" maxlength="15" required />
-        <input type="email" id="signup-email" placeholder="Email" required />
-        <input type="password" id="signup-password" placeholder="Пароль (6+ символов)" minlength="6" required />
-        <div class="error" id="signup-error"></div>
-        <button type="submit">Зарегистрироваться</button>
-      </form>
-      <!-- Вход -->
-      <form id="signin-form">
-        <input type="email" id="signin-email" placeholder="Email" required />
-        <input type="password" id="signin-password" placeholder="Пароль" required />
-        <div class="error" id="signin-error"></div>
-        <button type="submit">Войти</button>
-      </form>
+      <input id="email" type="email" placeholder="Введите email" autocomplete="username" />
+      <input id="password" type="password" placeholder="Введите пароль" autocomplete="current-password" />
+      <div class="error" id="auth-error"></div>
+      <button id="btn-signin">Войти</button>
+      <button id="btn-signup">Регистрация</button>
     </div>
 
-    <!-- Игра -->
     <div id="game">
-      <h1>Добро пожаловать, <span id="player-name"></span>!</h1>
+      <h1>Добро пожаловать, <span id="user-email"></span>!</h1>
       <div id="coins">Золото: 0</div>
-      <button id="mine-btn">Добыть золото</button>
-      <button id="upgrade-btn" disabled>Улучшить добычу (стоимость: 10)</button>
-      <div id="error-game"></div>
-      <button class="logout-btn" id="logout-btn">Выйти</button>
+      <button id="mine-btn" class="btn-small">Добыть золото</button>
+      <button id="upgrade-btn" class="btn-small" disabled>Улучшить добычу (стоимость: 10)</button>
+      <button id="logout-btn">Выйти</button>
+      <div class="error" id="game-error"></div>
     </div>
   </div>
 
   <!-- Рекламный баннер -->
- <div style="position: absolute; z-index: 99999">
-      <input autocomplete="off" type="checkbox" id="aadsstickyme80rm2l" hidden />
-      <div style="padding-top: 0; padding-bottom: auto;">
-        <div style="width:100%;height:auto;position:fixed;text-align:center;font-size:0;bottom:0;left:0;right:0;margin:auto">
-          <label for="aadsstickyme80rm2l" style="top: 50%;transform: translateY(-50%);right:24px;; position: absolute;border-radius: 4px; background: rgba(248, 248, 249, 0.70); padding: 4px;z-index: 99999;cursor:pointer">
-            <svg fill="#000000" height="16px" width="16px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 490">
-              <polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 489.292,457.678 277.331,245.004 489.292,32.337 "/>
-            </svg>
-          </label>
-          <div id="frame" style="width: 100%;margin: auto;background: rgba(0, 0, 0, 0.50);position: relative; z-index: 99998;"><iframe data-aa=2406373 src=//acceptable.a-ads.com/2406373/?size=Adaptive style='border:0; padding:0; width:70%; height:auto; overflow:hidden; margin: auto'></iframe></div>
+  <div style="position: absolute; z-index: 99999">
+    <input autocomplete="off" type="checkbox" id="aadsstickyme80rm2l" hidden />
+    <div style="padding-top: 0; padding-bottom: auto;">
+      <div style="width:100%;height:auto;position:fixed;text-align:center;font-size:0;bottom:0;left:0;right:0;margin:auto">
+        <label for="aadsstickyme80rm2l" id="banner-close-label" title="Закрыть рекламу">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 490"><polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 489.292,457.678 277.331,245.004 489.292,32.337 "/></svg>
+        </label>
+        <div id="banner-frame">
+          <iframe data-aa=2406373 src="//acceptable.a-ads.com/2406373/?size=Adaptive" style="border:0; padding:0; width:100%; height:auto; overflow:hidden; margin: auto"></iframe>
         </div>
-        <style>
+      </div>
+    </div>
+    <style>
       #aadsstickyme80rm2l:checked + div {
         display: none;
       }
     </style>
-    </div></div>
+  </div>
 
-  <!-- Firebase SDK и логика -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-    import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCXfzRrHa2t-y5TBJoipN0m_mv9bXjHmL8",
-      authDomain: "golden-mine-e7d50.firebaseapp.com",
-      databaseURL: "https://golden-mine-e7d50-default-rtdb.firebaseio.com",
-      projectId: "golden-mine-e7d50",
-      storageBucket: "golden-mine-e7d50.firebasestorage.app",
-      messagingSenderId: "49056047000",
-      appId: "1:49056047000:web:76e20efa45a0b8ffc415ed",
-      measurementId: "G-MMD56ZP5YE"
+  // === Firebase config ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXfzRrHa2t-y5TBJoipN0m_mv9bXjHmL8",
+    authDomain: "golden-mine-e7d50.firebaseapp.com",
+    databaseURL: "https://golden-mine-e7d50-default-rtdb.firebaseio.com",
+    projectId: "golden-mine-e7d50",
+    storageBucket: "golden-mine-e7d50.firebasestorage.app",
+    messagingSenderId: "49056047000",
+    appId: "1:49056047000:web:76e20efa45a0b8ffc415ed",
+    measurementId: "G-MMD56ZP5YE"
+  };
+
+  // === Initialize Firebase ===
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  // === DOM Elements ===
+  const authDiv = document.getElementById('auth');
+  const gameDiv = document.getElementById('game');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const authError = document.getElementById('auth-error');
+  const btnSignIn = document.getElementById('btn-signin');
+  const btnSignUp = document.getElementById('btn-signup');
+  const userEmailSpan = document.getElementById('user-email');
+  const coinsDiv = document.getElementById('coins');
+  const mineBtn = document.getElementById('mine-btn');
+  const upgradeBtn = document.getElementById('upgrade-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const gameError = document.getElementById('game-error');
+
+  // === Game variables ===
+  let coins = 0;
+  let miningPower = 1;
+  let upgradeCost = 10;
+  let currentUser = null;
+
+  // === Audio setup ===
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function playTone(freq, duration = 0.1, type = "sine", volume = 0.05) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.type = type;
+    oscillator.frequency.value = freq;
+    gainNode.gain.value = volume;
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.start();
+
+    oscillator.stop(audioCtx.currentTime + duration);
+    oscillator.onended = () => {
+      gainNode.disconnect();
+      oscillator.disconnect();
     };
+  }
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+  function playMineSound() {
+    playTone(350, 0.05, "square", 0.07);
+    setTimeout(() => playTone(450 + Math.random() * 40, 0.07, "triangle", 0.05), 60);
+  }
 
-    // DOM элементы
-    const signupForm = document.getElementById('signup-form');
-    const signinForm = document.getElementById('signin-form');
-    const signupError = document.getElementById('signup-error');
-    const signinError = document.getElementById('signin-error');
-    const welcomeNameSpan = document.getElementById('player-name');
-    const coinsDiv = document.getElementById('coins');
-    const mineBtn = document.getElementById('mine-btn');
-    const upgradeBtn = document.getElementById('upgrade-btn');
-    const errorGame = document.getElementById('error-game');
-    const logoutBtn = document.getElementById('logout-btn');
-    const authDiv = document.getElementById('auth');
-    const gameDiv = document.getElementById('game');
-    const tabs = document.querySelectorAll('.tab');
-    const signupNickname = document.getElementById('signup-nickname');
+  function playUpgradeSound() {
+    playTone(600, 0.12, "sine", 0.1);
+    setTimeout(() => playTone(720, 0.12, "sine", 0.08), 140);
+    setTimeout(() => playTone(840, 0.12, "sine", 0.06), 280);
+  }
 
-    // Переключение вкладок (рег и вход)
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        if (tab.dataset.tab === 'signup') {
-          signupForm.classList.add('active');
-          signinForm.classList.remove('active');
-          signupError.textContent = '';
-          signinError.textContent = '';
-        } else {
-          signupForm.classList.remove('active');
-          signinForm.classList.add('active');
-          signupError.textContent = '';
-          signinError.textContent = '';
-        }
-      });
-    });
+  function playErrorSound() {
+    playTone(220, 0.2, "sine", 0.1);
+  }
 
-    // Текущие данные игрока в памяти
-    let currentUser = null;
-    let coins = 0;
-    let miningPower = 1;
-    let upgradeCost = 10;
+  function playClickSound() {
+    playTone(500, 0.08, "triangle", 0.04);
+  }
 
-    // Функция обновления интерфейса
+  // === Update UI ===
+  function updateUI() {
+    coinsDiv.textContent = `Золото: ${coins}`;
+    upgradeBtn.textContent = `Улучшить добычу (стоимость: ${upgradeCost})`;
+    upgradeBtn.disabled = coins < upgradeCost;
+  }
+
+  // === Load & Save Game Data ===
+  async function loadGameData(uid) {
+    const dataRef = ref(db, 'users/' + uid);
+    const snapshot = await get(dataRef);
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      coins = data.coins || 0;
+      miningPower = data.miningPower || 1;
+      upgradeCost = data.upgradeCost || 10;
+    } else {
+      coins = 0;
+      miningPower = 1;
+      upgradeCost = 10;
+      await set(dataRef, { coins, miningPower, upgradeCost });
+    }
+    updateUI();
+  }
+
+  async function saveGameData(uid) {
+    const dataRef = ref(db, 'users/' + uid);
+    await update(dataRef, { coins, miningPower, upgradeCost });
+  }
+
+  // === Button Handlers ===
+
+  btnSignUp.onclick = async () => {
+    authError.textContent = "";
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+      currentUser = userCredential.user;
+      userEmailSpan.textContent = currentUser.email;
+      await loadGameData(currentUser.uid);
+      authDiv.style.display = "none";
+      gameDiv.style.display = "block";
+      playClickSound();
+    } catch (error) {
+      authError.textContent = error.message;
+      playErrorSound();
+    }
+  };
+
+  btnSignIn.onclick = async () => {
+    authError.textContent = "";
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+      currentUser = userCredential.user;
+      userEmailSpan.textContent = currentUser.email;
+      await loadGameData(currentUser.uid);
+      authDiv.style.display = "none";
+      gameDiv.style.display = "block";
+      playClickSound();
+    } catch (error) {
+      authError.textContent = error.message;
+      playErrorSound();
+    }
+  };
+
+  logoutBtn.onclick = async () => {
+    await signOut(auth);
+    currentUser = null;
+    authDiv.style.display = "block";
+    gameDiv.style.display = "none";
+    emailInput.value = "";
+    passwordInput.value = "";
+    coins = 0;
+    miningPower = 1;
+    upgradeCost = 10;
+    updateUI();
+    playClickSound();
+  };
+
+  mineBtn.onclick = () => {
+    coins += miningPower;
+    updateUI();
+    saveGameData(currentUser.uid);
+    playMineSound();
+  };
+
+  upgradeBtn.onclick = () => {
+    if (coins >= upgradeCost) {
+      coins -= upgradeCost;
+      miningPower += 1;
+      upgradeCost = Math.floor(upgradeCost * 2);
+      updateUI();
+      saveGameData(currentUser.uid);
+      gameError.textContent = "";
+      playUpgradeSound();
+    } else {
+      gameError.textContent = "Недостаточно золота для улучшения!";
+      playErrorSound();
+    }
+  };
+
+  // === Firebase Auth state observer ===
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+      userEmailSpan.textContent = user.email;
+      loadGameData(user.uid);
+      authDiv.style.display = "none";
+      gameDiv.style.display = "block";
+    } else {
+      currentUser = null;
+      authDiv.style.display = "block";
+      gameDiv.style.display = "none";
+    }
+  });
+
+  updateUI();
+</script>
+
+</body>
+</html>
