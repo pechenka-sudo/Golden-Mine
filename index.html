@@ -1,48 +1,53 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Золотая Шахта — Idle</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gold Mine Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="topbar">
-    <h1>⛏ Золотая Шахта</h1>
-    <div class="status">
-      <div id="coins" class="coins">0</div>
-      <button id="muteBtn" class="icon">🔊</button>
+
+<!-- Рекламный баннер -->
+<div style="position: absolute; z-index: 99999">
+  <input autocomplete="off" type="checkbox" id="aadsstickyme745b3w" hidden />
+  <div style="padding-top: auto; padding-bottom: 0;">
+    <div style="width:100%;height:auto;position:fixed;text-align:center;font-size:0;top:0;left:0;right:0;margin:auto">
+      <label for="aadsstickyme745b3w" style="top: 50%;transform: translateY(-50%);right:24px;; position: absolute;border-radius: 4px; background: rgba(248, 248, 249, 0.70); padding: 4px;z-index: 99999;cursor:pointer">
+        <svg fill="#000000" height="16px" width="16px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 490">
+          <polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 489.292,457.678 277.331,245.004 489.292,32.337 "/>
+        </svg>
+      </label>
+      <div id="frame" style="width: 100%;margin: auto;background: rgba(0, 0, 0, 0.50);position: relative; z-index: 99998;">
+        <iframe data-aa=2406373 src=//acceptable.a-ads.com/2406373/?size=Adaptive style='border:0; padding:0; width:70%; height:auto; overflow:hidden; margin: auto'></iframe>
+      </div>
     </div>
+    <style>
+      #aadsstickyme745b3w:checked + div {
+        display: none;
+      }
+    </style>
   </div>
+</div>
 
-  <main class="container">
-    <section class="mine">
-      <div id="rock" class="rock" title="Кликни, чтобы добить (или нажми Space)"></div>
-      <div class="clickHint">Нажми на камень</div>
-    </section>
+<!-- Авторизация -->
+<div id="auth-container">
+  <h2>Вход в Gold Mine</h2>
+  <input type="text" id="nickname" placeholder="Ник">
+  <input type="password" id="password" placeholder="Пароль">
+  <button id="login-btn">Войти</button>
+  <button id="register-btn">Регистрация</button>
+  <p id="auth-error"></p>
+</div>
 
-    <aside class="panel">
-      <div class="section">
-        <h2>Шахтёры</h2>
-        <div id="minersList" class="minersList"></div>
-        <button id="buySlot" class="wide">Нанять новый тип (200)</button>
-      </div>
+<!-- Игра -->
+<div id="game-container" class="hidden">
+  <h1>Gold Mine</h1>
+  <p>Игрок: <span id="player-name"></span></p>
+  <p>Золото: <span id="coins">0</span></p>
+  <button id="mine-btn">Копать золото</button>
+</div>
 
-      <div class="section">
-        <h2>Магазин</h2>
-        <button id="buyPack" class="wide">Пакет золота +100 (100)</button>
-        <button id="resetBtn" class="wide red">Сброс прогресса</button>
-      </div>
-
-      <div class="section small">
-        <div>Авто: <span id="autoRate">0</span>/с</div>
-        <div>UID: <span id="uid" class="mono"></span></div>
-      </div>
-    </aside>
-  </main>
-
-  <footer class="footer">Сохранение в localStorage · Сделано быстро и красиво</footer>
-
-  <script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
